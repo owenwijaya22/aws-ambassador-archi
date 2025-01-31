@@ -10,7 +10,7 @@ Description: >
 Parameters: {}
 
 Resources:
-  # Our simple REST API
+  # Our REST API which will connect to Lambda then to DynamoDB
   SimpleAPI:
     Type: 'AWS::ApiGateway::RestApi'
     Properties:
@@ -20,20 +20,38 @@ Resources:
         Types:
           - REGIONAL
 
-  # The Resource (/hello) of our API
-  SimpleAPIResource:
+  CounterAPIResource:
     Type: 'AWS::ApiGateway::Resource'
     Properties:
       ParentId: !GetAtt 
         - SimpleAPI
         - RootResourceId
-      PathPart: hello
+      PathPart: counter
       RestApiId: !Ref SimpleAPI
 
-  # The method to call (GET) for our API
-  HelloAPIGETMethod:
+  TrendsAPIResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      ParentId: !GetAtt 
+        - SimpleAPI
+        - RootResourceId
+      PathPart: trends
+      RestApiId: !Ref SimpleAPI
+
+  #mock test
+  MockAPIResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      ParentId: !GetAtt 
+        - SimpleAPI
+        - RootResourceId
+      PathPart: mock
+      RestApiId: !Ref SimpleAPI
+
+Resources:
+  # GET /counter
+  CounterGETMethod:
     Type: 'AWS::ApiGateway::Method'
-    #checkov:skip=CKV_AWS_59: "This API does not expose backend service"
     DependsOn:
       - CFDistributionSPA
     Properties:
@@ -49,9 +67,9 @@ Resources:
           - StatusCode: 200
             SelectionPattern: 200
             ResponseParameters:
-              method.response.header.Access-Control-Allow-Origin: !Sub  '''https://${CFDistributionSPA.DomainName}'''
+              method.response.header.Access-Control-Allow-Origin: !Sub '''https://${CFDistributionSPA.DomainName}'''
             ResponseTemplates:
-              application/json: "{\"message\": \"Hello World!\"}"
+              application/json: "{\"count\": 42}"
       MethodResponses:
         - StatusCode: 200
           ResponseParameters:
@@ -59,7 +77,97 @@ Resources:
           ResponseModels:
             application/json: Empty
       RestApiId: !Ref SimpleAPI
-      ResourceId: !Ref SimpleAPIResource
+      ResourceId: !Ref CounterAPIResource
+
+  # POST /counter
+  CounterPOSTMethod:
+    Type: 'AWS::ApiGateway::Method'
+    DependsOn:
+      - CFDistributionSPA
+    Properties:
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: "{\n \"statusCode\": 200\n}"
+        IntegrationResponses:
+          - StatusCode: 200
+            SelectionPattern: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: !Sub '''https://${CFDistributionSPA.DomainName}'''
+            ResponseTemplates:
+              application/json: "{\"message\": \"Counter updated\"}"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+          ResponseModels:
+            application/json: Empty
+      RestApiId: !Ref SimpleAPI
+      ResourceId: !Ref CounterAPIResource
+
+  # POST /mock
+  MockPOSTMethod:
+    Type: 'AWS::ApiGateway::Method'
+    DependsOn:
+      - CFDistributionSPA
+    Properties:
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: "{\n \"statusCode\": 200\n}"
+        IntegrationResponses:
+          - StatusCode: 200
+            SelectionPattern: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: !Sub '''https://${CFDistributionSPA.DomainName}'''
+            ResponseTemplates:
+              application/json: "{\"message\": \"Mock data received\"}"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+          ResponseModels:
+            application/json: Empty
+      RestApiId: !Ref SimpleAPI
+      ResourceId: !Ref MockAPIResource
+
+  # GET /trends
+  TrendsGETMethod:
+    Type: 'AWS::ApiGateway::Method'
+    DependsOn:
+      - CFDistributionSPA
+    Properties:
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      HttpMethod: GET
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: "{\n \"statusCode\": 200\n}"
+        IntegrationResponses:
+          - StatusCode: 200
+            SelectionPattern: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: !Sub '''https://${CFDistributionSPA.DomainName}'''
+            ResponseTemplates:
+              application/json: "{\"trends\": [{\"name\": \"Trend 1\", \"value\": 100}, {\"name\": \"Trend 2\", \"value\": 200}]}"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+          ResponseModels:
+            application/json: Empty
+      RestApiId: !Ref SimpleAPI
+      ResourceId: !Ref TrendsAPIResource
 
   # A deployment resource for deploying our API
   Deployment:
@@ -150,8 +258,7 @@ Resources:
           - ObjectOwnership: BucketOwnerPreferred
     DeletionPolicy: Delete
 
-  # The Amazon CloudFront distribution exposing our Single Page Application
-  # Policies can be found here: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-response-headers-policies.html
+  # CloudFront dist exposing our Single Page Application
   CFDistributionSPA:
     #checkov:skip=CKV_AWS_68: "For demo purposes and to reduce cost, no WAF is configured"
     Type: 'AWS::CloudFront::Distribution'
