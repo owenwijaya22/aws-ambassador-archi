@@ -2,7 +2,8 @@
 - Automated with GitHub Actions CI/CD pipeline that builds the site, deletes existing files in s3, uploads the new builds, and invalidates the CloudFront CDN cache.
 - The backend is a serverless AWS with Lambda and DynamoDB that is exposed with API Gateway to the frontend.
 
-Architecture Explanation: ![Screenshot_1-2-2025_32314_archi-explanation vercel app](https://github.com/user-attachments/assets/5380129d-e3d7-466d-919c-57f688b11ab6)
+Architecture Explanation: [Demo Preview](https://github.com/user-attachments/assets/0d25b9c9-7f2c-4a8f-920c-f1b3064e1e57)
+
 Live Demo: [(https://www.simplifiedaws.com)](https://www.simplifiedaws.com/)
 
 Follow these steps:
