@@ -1,0 +1,247 @@
+import React, { useState, useEffect } from "react";
+import Head from "next/head";
+import Image from "next/image";
+import styles from "@/styles/Home.module.css";
+import useSWR, { mutate } from "swr";;
+import { Chart } from "react-google-charts";
+
+
+import logoS3 from "../../public/logoS3.png";
+import logoCF from "../../public/logoCloudFront.png";
+import logo from "../../public/logo.svg";
+
+// API endpoints
+const CounterAPI = "https://dyq8814cgc.execute-api.us-east-1.amazonaws.com/production/counter";
+const TrendsAPI = "https://dyq8814cgc.execute-api.us-east-1.amazonaws.com/production/trends";
+
+interface CounterData {
+    total_visits: number;
+    today_visits: number;
+}
+
+interface TrendData {
+    visits: number;
+    pageId: string;
+}
+
+interface CounterProps {
+    isLoading: boolean;
+}
+
+const fetcher = (url: string): Promise<any> => {
+    return fetch(url).then((res) => res.json());
+};
+
+function Counter({ isLoading }: CounterProps) {
+    const { data, error } = useSWR<CounterData>(CounterAPI, fetcher, {
+        refreshInterval: 1000,
+    });
+
+    if (error) return <div>Failed to load counter: {error.message}</div>;
+    if (!data) return <div>Loading counter...</div>;
+
+    return (
+        <div className="text-center p-4">
+            <h2 className="text-2xl font-bold mb-2">Visit Counter</h2>
+            <p className="text-xl mb-2">
+                {isLoading ? "Updating..." : `Total visits: ${data.total_visits}`}
+            </p>
+            <p className="text-xl">
+                {isLoading ? "Updating..." : `Today's visits: ${data.today_visits}`}
+            </p>
+        </div>
+    );
+}
+
+function VisitTrends() {
+    const { data, error } = useSWR<TrendData[]>(TrendsAPI, fetcher);
+
+    if (error) return <div>Failed to load visit trends: {error.message}</div>;
+    if (!data) return <div>Loading visit trends...</div>;
+
+    // Transform the data for Google Charts
+    const chartData = [
+        ["Date", "Visits"], // Header row
+        ...data.map(item => [item.pageId.split('-')[2], item.visits]) // Only show day of the month
+    ];
+
+    const options = {
+        title: "Dynamically Updated Table",
+        titleTextStyle: {
+            color: '#FFFFFF',
+            fontSize: 24,
+            bold: true
+        },
+        backgroundColor: {
+            fill: 'transparent'
+        },
+        hAxis: { 
+            title: "Day of Month",
+            titleTextStyle: { color: '#FFFFFF' },
+            textStyle: { 
+                color: '#FFFFFF',
+                fontSize: 14
+            },
+            gridlines: {
+                color: '#444444'
+            },
+            baselineColor: '#666666'
+        },
+        vAxis: { 
+            title: "Number of Visits",
+            titleTextStyle: { color: '#FFFFFF' },
+            textStyle: { 
+                color: '#FFFFFF',
+                fontSize: 14
+            },
+            gridlines: {
+                color: '#444444'
+            },
+            baselineColor: '#666666'
+        },
+        legend: "none",
+        chartArea: { 
+            width: '85%', 
+            height: '80%',
+            backgroundColor: {
+                fill: 'transparent'
+            }
+        },
+        colors: ['#3b82f6'], // Bright blue color
+        lineWidth: 3,
+        pointSize: 8,
+        animation: {
+            startup: true,
+            duration: 1000,
+            easing: 'out'
+        },
+        tooltip: {
+            textStyle: { 
+                color: '#000000',
+                fontSize: 14
+            }
+        }
+    };
+
+    return (
+        <div className="p-6 space-y-8">
+            <h2 className="text-3xl font-bold mb-4 text-center text-white">Visit Trends</h2>
+            
+            {/* Line Chart */}
+            <div className="w-full max-w-5xl mx-auto rounded-xl overflow-hidden bg-gray-900 p-6">
+                <Chart
+                    chartType="LineChart"
+                    width="900px"
+                    height="600px"
+                    data={chartData}
+                    options={options}
+                />
+            </div>
+        </div>
+    );
+}
+
+
+
+export default function Home() {
+    const [isLoading, setIsLoading] = useState(false);
+
+    const incrementCounter = async () => {
+        try {
+            setIsLoading(true);
+            const response = await fetch(CounterAPI, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to increment counter");
+            }
+
+            mutate(CounterAPI);
+        } catch (error) {
+            console.error("Error incrementing counter:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        incrementCounter();
+    }, []);
+
+    return (
+        <>
+            <Head>
+                <title>Demo App</title>
+                <meta name="description" content="Generated by create next app" />
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
+                <link rel="icon" href="/favicon.ico" />
+            </Head>
+            <div className={styles.page}>
+                <main className={styles.main}>
+                    <p>
+                        This react-based single page application (SPA) is hosted
+                        in an Amazon S3 bucket exposed through an Amazon
+                        CloudFront distribution.
+                    </p>
+                    <p>
+                        It calls an API configured in Amazon API Gateway and
+                        exposed through the same Amazon CloudFront distribution.
+                    </p>
+                    <p>
+                        Amazon API Gateway then calls a lambda function to
+                        update the user count in Amazon DynamoDB and returns the
+                        updated total count, today's count, and historical trends.
+                    </p>
+
+                    <img
+                        src={logo.src}
+                        className={styles.app_mainlogo}
+                        alt="logo"
+                    />
+
+                    <Counter isLoading={isLoading} />
+
+                    <VisitTrends />
+
+                    <div className={styles.logos}>
+                        <Image
+                            className={styles.app_logoR2L}
+                            src={logoS3}
+                            alt="Amazon S3 logo"
+                            priority
+                        />
+                        <Image
+                            className={styles.app_logoL2R}
+                            src={logoCF}
+                            alt="Amazon CloudFront logo"
+                            priority
+                        />
+                    </div>
+
+                    <div className={styles.ctas}>
+                        <a
+                            className={styles.primary}
+                            href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Read Amazon S3 Documentation
+                        </a>
+                        <a
+                            href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Introduction.html"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.secondary}
+                        >
+                            Read Amazon CloudFront Documentation
+                        </a>
+                    </div>
+                </main>
+            </div>
+        </>
+    );
+}
