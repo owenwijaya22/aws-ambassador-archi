@@ -154,9 +154,10 @@ const Index = () => {
           <h1 className="text-4xl font-bold text-white mb-6">AWS Infrastructure Demo</h1>
           <p className="text-gray-300 text-lg">
             This Vite, React, Tailwind SPA is routed with Route53 custom domain, exposed through CloudFront, and hosted on S3 bucket.
+            Automated with Github Actions CI/CD pipeline that builds the site, deletes existing files in s3, upload the new builds, and invalidate CloudFront CDN cache.
           </p>
           <p className="text-gray-300 text-lg">
-            The backend utilizes AWS serverless archi with Lambda and DynamoDB and connected to the frontend with API Gateway.
+            The backend is a serverless AWS with Lambda and DynamoDB that is exposed with API Gateway to the frontend.
           </p>
         </div>
 
