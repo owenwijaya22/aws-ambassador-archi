@@ -1,239 +1,189 @@
-import React, { useState, useEffect } from "react";
-import Head from "next/head";
-import Image from "next/image";
-import styles from "@/styles/Home.module.css";
-import useSWR, { mutate } from "swr";;
-import { Chart } from "react-google-charts";
-
-
-import logoS3 from "../../public/logoS3.png";
-import logoCF from "../../public/logoCloudFront.png";
-import logo from "../../public/logo.svg";
+import React, { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { toast } from "sonner";
 
 // API endpoints
-const CounterAPI = "https://dyq8814cgc.execute-api.us-east-1.amazonaws.com/production/counter";
-const TrendsAPI = "https://dyq8814cgc.execute-api.us-east-1.amazonaws.com/production/trends";
+const COUNTER_API = "https://dyq8814cgc.execute-api.us-east-1.amazonaws.com/production/counter";
+const TRENDS_API = "https://dyq8814cgc.execute-api.us-east-1.amazonaws.com/production/trends";
 
 interface CounterData {
-    total_visits: number;
-    today_visits: number;
+  total_visits: number;
+  today_visits: number;
 }
 
 interface TrendData {
-    visits: number;
-    pageId: string;
+  visits: number;
+  pageId: string;
 }
 
-interface CounterProps {
-    isLoading: boolean;
-}
+const Counter = () => {
+  const { data, error, isLoading } = useQuery({
+    queryKey: ["counter"],
+    queryFn: async () => {
+      const response = await fetch(COUNTER_API);
+      if (!response.ok) {
+        throw new Error("Failed to fetch counter data");
+      }
+      return response.json() as Promise<CounterData>;
+    },
+    refetchInterval: 1000,
+  });
 
-const fetcher = (url: string): Promise<any> => {
-    return fetch(url).then((res) => res.json());
+  if (error) {
+    toast.error("Failed to load counter data");
+    return null;
+  }
+
+  return (
+    <div className="text-center p-4 bg-gray-800 rounded-lg shadow-xl">
+      <h2 className="text-2xl font-bold mb-4 text-white">Visit Counter</h2>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="p-4 bg-gray-700 rounded-lg">
+          <p className="text-gray-400 mb-2">Total Visits</p>
+          <p className="text-3xl font-bold text-blue-400">
+            {isLoading ? "..." : data?.total_visits}
+          </p>
+        </div>
+        <div className="p-4 bg-gray-700 rounded-lg">
+          <p className="text-gray-400 mb-2">Today's Visits</p>
+          <p className="text-3xl font-bold text-green-400">
+            {isLoading ? "..." : data?.today_visits}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 };
 
-function Counter({ isLoading }: CounterProps) {
-    const { data, error } = useSWR<CounterData>(CounterAPI, fetcher, {
-        refreshInterval: 1000,
-    });
+const VisitTrends = () => {
+  const { data, error, isLoading } = useQuery({
+    queryKey: ["trends"],
+    queryFn: async () => {
+      const response = await fetch(TRENDS_API);
+      if (!response.ok) {
+        throw new Error("Failed to fetch trends data");
+      }
+      return response.json() as Promise<TrendData[]>;
+    },
+    // Add refetchInterval to automatically update trends data
+    refetchInterval: 1000,
+  });
 
-    if (error) return <div>Failed to load counter: {error.message}</div>;
-    if (!data) return <div>Loading counter...</div>;
+  if (error) {
+    toast.error("Failed to load trends data");
+    return null;
+  }
 
+  if (isLoading) {
     return (
-        <div className="text-center p-4">
-            <h2 className="text-2xl font-bold mb-2">Visit Counter</h2>
-            <p className="text-xl mb-2">
-                {isLoading ? "Updating..." : `Total visits: ${data.total_visits}`}
-            </p>
-            <p className="text-xl">
-                {isLoading ? "Updating..." : `Today's visits: ${data.today_visits}`}
-            </p>
-        </div>
+      <div className="text-center p-8">
+        <p className="text-white">Loading trends...</p>
+      </div>
     );
-}
-function VisitTrends() {
-    const { data, error } = useSWR<TrendData[]>(TrendsAPI, fetcher);
+  }
 
-    if (error) return <div>Failed to load visit trends: {error.message}</div>;
-    if (!data) return <div>Loading visit trends...</div>;
+  const chartData = data?.map(item => ({
+    day: parseInt(item.pageId.split('-')[2]),
+    visits: item.visits
+  })) || [];
 
-    // Transform the data for Google Charts
-    const chartData = [
-        ["Date", "Visits"], // Header row
-        ...data.map(item => [parseInt(item.pageId.split('-')[2]), item.visits]) // Convert day string to number
-    ];
+  return (
+    <div className="w-full p-6 bg-gray-800 rounded-lg shadow-xl">
+      <h2 className="text-2xl font-bold mb-6 text-white text-center">Visit Trends</h2>
+      <div className="w-full h-[400px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+            <XAxis 
+              dataKey="day" 
+              stroke="#fff"
+              label={{ value: 'Day of Month', position: 'bottom', fill: '#fff' }}
+            />
+            <YAxis 
+              stroke="#fff"
+              label={{ value: 'Number of Visits', angle: -90, position: 'insideLeft', fill: '#fff' }}
+            />
+            <Tooltip 
+              contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }}
+              labelStyle={{ color: '#fff' }}
+              itemStyle={{ color: '#60a5fa' }}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="visits" 
+              stroke="#60a5fa" 
+              strokeWidth={3}
+              dot={{ fill: '#60a5fa', strokeWidth: 2 }}
+              activeDot={{ r: 8 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+};
 
-    const lineChartOptions = {
-        backgroundColor: {
-            fill: 'transparent'
-        },
-        hAxis: { 
-            title: "Day of Month",
-            titleTextStyle: { color: '#FFFFFF' },
-            textStyle: { 
-                color: '#FFFFFF',
-                fontSize: 14
-            },
-            gridlines: {
-                color: '#444444'
-            },
-            baselineColor: '#666666'
-        },
-        vAxis: { 
-            title: "Number of Visits",
-            titleTextStyle: { color: '#FFFFFF' },
-            textStyle: { 
-                color: '#FFFFFF',
-                fontSize: 14
-            },
-            gridlines: {
-                color: '#444444'
-            },
-            baselineColor: '#666666'
-        },
-        legend: "none",
-        chartArea: { 
-            width: '85%', 
-            height: '80%',
-            backgroundColor: {
-                fill: 'transparent'
-            }
-        },
-        colors: ['#3b82f6'],
-        lineWidth: 3,
-        pointSize: 8,
-        animation: {
-            duration: 1000,
-            easing: 'out'
-        },
-        tooltip: {
-            textStyle: { 
-                color: '#000000',
-                fontSize: 14
-            }
-        }
-    };
-
-    return (
-        <div className="p-6 space-y-8">
-            <h2 className="text-3xl font-bold mb-4 text-center text-white">Visit Trends</h2>
-            
-            {/* Line Chart */}
-            <div className="w-full max-w-5xl mx-auto rounded-xl overflow-hidden bg-gray-900 p-6 shadow-lg">
-                <Chart
-                    chartType="LineChart"
-                    width="800px"
-                    height="500px"
-                    data={chartData}
-                    options={lineChartOptions}
-                />
-            </div>
-        </div>
-    );
-}
-
-
-
-export default function Home() {
-    const [isLoading, setIsLoading] = useState(false);
-
+const Index = () => {
+  useEffect(() => {
     const incrementCounter = async () => {
-        try {
-            setIsLoading(true);
-            const response = await fetch(CounterAPI, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
+      try {
+        const response = await fetch(COUNTER_API, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
 
-            if (!response.ok) {
-                throw new Error("Failed to increment counter");
-            }
-
-            mutate(CounterAPI);
-        } catch (error) {
-            console.error("Error incrementing counter:", error);
-        } finally {
-            setIsLoading(false);
+        if (!response.ok) {
+          throw new Error("Failed to increment counter");
         }
+      } catch (error) {
+        console.error("Error incrementing counter:", error);
+        toast.error("Failed to increment counter");
+      }
     };
 
-    useEffect(() => {
-        incrementCounter();
-    }, []);
+    incrementCounter();
+  }, []);
 
-    return (
-        <>
-            <Head>
-                <title>Demo App</title>
-                <meta name="description" content="Generated by create next app" />
-                <meta name="viewport" content="width=device-width, initial-scale=1" />
-                <link rel="icon" href="/favicon.ico" />
-            </Head>
-            <div className={styles.page}>
-                <main className={styles.main}>
-                    <p>
-                        This react-based single page application (SPA) is hosted
-                        in an Amazon S3 bucket exposed through an Amazon
-                        CloudFront distribution.
-                    </p>
-                    <p>
-                        It calls an API configured in Amazon API Gateway and
-                        exposed through the same Amazon CloudFront distribution.
-                    </p>
-                    <p>
-                        Amazon API Gateway then calls a lambda function to
-                        update the user count in Amazon DynamoDB and returns the
-                        updated total count, today's count, and historical trends.
-                    </p>
+  return (
+    <div className="min-h-screen bg-gray-900 p-8">
+      <div className="max-w-6xl mx-auto space-y-8">
+        <div className="text-center space-y-4 mb-12">
+          <h1 className="text-4xl font-bold text-white mb-6">AWS Infrastructure Demo</h1>
+          <p className="text-gray-300 text-lg">
+            This React SPA is hosted in an Amazon S3 bucket and exposed through CloudFront.
+          </p>
+          <p className="text-gray-300 text-lg">
+            It uses API Gateway and Lambda to track visits in DynamoDB.
+          </p>
+        </div>
 
-                    <img
-                        src={logo.src}
-                        className={styles.app_mainlogo}
-                        alt="logo"
-                    />
+        <Counter />
+        <VisitTrends />
 
-                    <Counter isLoading={isLoading} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
+          <a
+            href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-6 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-center transition-colors"
+          >
+            Read Amazon S3 Documentation
+          </a>
+          <a
+            href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Introduction.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-6 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-center transition-colors"
+          >
+            Read Amazon CloudFront Documentation
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
 
-                    <VisitTrends />
-
-                    <div className={styles.logos}>
-                        <Image
-                            className={styles.app_logoR2L}
-                            src={logoS3}
-                            alt="Amazon S3 logo"
-                            priority
-                        />
-                        <Image
-                            className={styles.app_logoL2R}
-                            src={logoCF}
-                            alt="Amazon CloudFront logo"
-                            priority
-                        />
-                    </div>
-
-                    <div className={styles.ctas}>
-                        <a
-                            className={styles.primary}
-                            href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            Read Amazon S3 Documentation
-                        </a>
-                        <a
-                            href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Introduction.html"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.secondary}
-                        >
-                            Read Amazon CloudFront Documentation
-                        </a>
-                    </div>
-                </main>
-            </div>
-        </>
-    );
-}
+export default Index;
