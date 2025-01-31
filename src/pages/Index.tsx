@@ -84,7 +84,7 @@ const VisitTrends = () => {
       }
       return response.json() as Promise<TrendData[]>;
     },
-    refetchInterval: 1000,
+    refetchInterval: 500,
   });
 
   if (error) {
