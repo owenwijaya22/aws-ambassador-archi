@@ -3,7 +3,7 @@ name: Deploy to S3 and Invalidate CloudFront
 on:
   push:
     branches:
-      - main  # or your default branch name
+      - master  # or your default branch name
 
 jobs:
   deploy:
@@ -16,10 +16,18 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'  # or your preferred Node.js version
+          node-version: 'lts/*'  # Use the latest LTS version of Node.js
+
+      - name: Cache Node.js modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci  # Use npm ci for clean, repeatable installs
 
       - name: Build project
         run: npm run build
@@ -30,6 +38,14 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1  # replace with your AWS region
+
+      - name: Upgrade AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+
+      - name: Check AWS CLI version
+        run: aws --version
 
       - name: Delete existing files in S3
         run: |
