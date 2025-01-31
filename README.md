@@ -6,7 +6,7 @@ Architecture Explanation: [Demo Preview](https://github.com/user-attachments/ass
 
 Live Demo: [Click Me!](https://www.simplifiedaws.com/)
 
-Follow these steps:
+To replicate, follow these steps:
 ```sh
 # Step 1: Clone the repository using the project's Git URL.
 git clone <YOUR_GIT_URL>
