@@ -52,7 +52,6 @@ function Counter({ isLoading }: CounterProps) {
         </div>
     );
 }
-
 function VisitTrends() {
     const { data, error } = useSWR<TrendData[]>(TrendsAPI, fetcher);
 
@@ -62,16 +61,10 @@ function VisitTrends() {
     // Transform the data for Google Charts
     const chartData = [
         ["Date", "Visits"], // Header row
-        ...data.map(item => [item.pageId.split('-')[2], item.visits]) // Only show day of the month
+        ...data.map(item => [parseInt(item.pageId.split('-')[2]), item.visits]) // Convert day string to number
     ];
 
-    const options = {
-        title: "Dynamically Updated Table",
-        titleTextStyle: {
-            color: '#FFFFFF',
-            fontSize: 24,
-            bold: true
-        },
+    const lineChartOptions = {
         backgroundColor: {
             fill: 'transparent'
         },
@@ -107,11 +100,10 @@ function VisitTrends() {
                 fill: 'transparent'
             }
         },
-        colors: ['#3b82f6'], // Bright blue color
+        colors: ['#3b82f6'],
         lineWidth: 3,
         pointSize: 8,
         animation: {
-            startup: true,
             duration: 1000,
             easing: 'out'
         },
@@ -128,13 +120,13 @@ function VisitTrends() {
             <h2 className="text-3xl font-bold mb-4 text-center text-white">Visit Trends</h2>
             
             {/* Line Chart */}
-            <div className="w-full max-w-5xl mx-auto rounded-xl overflow-hidden bg-gray-900 p-6">
+            <div className="w-full max-w-5xl mx-auto rounded-xl overflow-hidden bg-gray-900 p-6 shadow-lg">
                 <Chart
                     chartType="LineChart"
-                    width="900px"
-                    height="600px"
+                    width="800px"
+                    height="500px"
                     data={chartData}
-                    options={options}
+                    options={lineChartOptions}
                 />
             </div>
         </div>
