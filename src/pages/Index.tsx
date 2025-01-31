@@ -57,7 +57,7 @@ const Counter = () => {
           <TrendingUpIcon className="w-6 h-6 text-blue-400" />
           <p className="text-gray-200 text-lg font-medium">Total Visits</p>
         </div>
-        <p className="text-4xl font-bold text-white">
+        <p className="text-4xl font-bold text-white text-center"> {/* Added text-center here */}
           {isLoading ? "..." : data?.total_visits.toLocaleString()}
         </p>
       </div>
@@ -66,7 +66,7 @@ const Counter = () => {
           <DatabaseIcon className="w-6 h-6 text-green-400" />
           <p className="text-gray-200 text-lg font-medium">Today's Visits</p>
         </div>
-        <p className="text-4xl font-bold text-white">
+        <p className="text-4xl font-bold text-white text-center"> {/* Added text-center here */}
           {isLoading ? "..." : data?.today_visits.toLocaleString()}
         </p>
       </div>
@@ -358,7 +358,7 @@ const Index = () => {
             </h1>
           </div>
           <p className="text-gray-300 text-lg md:text-xl">
-            Modern Cloud Architecture with Real-time Analytics
+            Modern Cloud Architecture with Live Data Update
           </p>
         </div>
 
