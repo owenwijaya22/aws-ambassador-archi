@@ -153,10 +153,10 @@ const Index = () => {
         <div className="text-center space-y-4 mb-12">
           <h1 className="text-4xl font-bold text-white mb-6">AWS Infrastructure Demo</h1>
           <p className="text-gray-300 text-lg">
-            This React SPA is hosted in an Amazon S3 bucket and exposed through CloudFront.
+            This Vite, React, Tailwind SPA is routed with Route53 custom domain, exposed through CloudFront, and hosted on S3 bucket.
           </p>
           <p className="text-gray-300 text-lg">
-            It uses API Gateway and Lambda to track visits in DynamoDB.
+            The backend utilizes AWS serverless archi with Lambda and DynamoDB and connected to the frontend with API Gateway.
           </p>
         </div>
 
