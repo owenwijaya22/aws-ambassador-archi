@@ -6,6 +6,7 @@ Description: >
       - An Amazon CloudFront distribution to expose the application and the API
       - An Amazon S3 bucket for hosting bucket and cloudfront access logs
       - A public API to be used by the application
+      - Target in the future: seamless DynamoDB integration!
 
 Parameters: {}
 
