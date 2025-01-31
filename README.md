@@ -4,7 +4,7 @@
 
 Architecture Explanation: [Demo Preview](https://github.com/user-attachments/assets/0d25b9c9-7f2c-4a8f-920c-f1b3064e1e57)
 
-Live Demo: [(simplifiedaws.com)](https://www.simplifiedaws.com/)
+Live Demo: [Click Me!](https://www.simplifiedaws.com/)
 
 Follow these steps:
 ```sh
