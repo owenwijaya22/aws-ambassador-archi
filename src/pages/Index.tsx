@@ -1,10 +1,14 @@
+import * as React from "react";
 import { useEffect } from "react";
-import { BoxIcon } from 'lucide-react'; 
+import { motion, AnimatePresence } from "framer-motion";
+import { BoxIcon } from 'lucide-react';
 import { useQuery } from "@tanstack/react-query";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { toast } from "sonner";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
+import { useToast } from "@/components/ui/use-toast";
+
 import { 
   RocketIcon,
+  BarChart2Icon,
   UploadCloudIcon,
   RefreshCwIcon,
   Trash2Icon,
@@ -14,9 +18,25 @@ import {
   GlobeIcon,
   ServerIcon,
   Zap,
+  ArrowUpIcon,
+  ArrowDownIcon,
   RefreshCcw,
+  InfoIcon,
   ArrowRightIcon
 } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // API endpoints
 const COUNTER_API = "https://dyq8814cgc.execute-api.us-east-1.amazonaws.com/production/counter";
@@ -97,31 +117,268 @@ const AnimatedTitle = () => {
   );
 };
 
-// Add these custom keyframes to your existing styles
-const customStyles = `
-  @keyframes bounce-slow {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-  }
+const StatCard = ({ icon: Icon, title, value, description, trend, defaultColor, isLoading }) => {
+  // Determine color based on trend for traffic cards
+  const isTrafficCard = title.includes('Traffic') || title.includes('Visits');
+  const color = isTrafficCard 
+    ? (trend >= 0 ? 'emerald' : 'red')
+    : defaultColor;
+    
+  const trendValue = trend > 0 ? `+${trend}%` : `${trend}%`;
+  const TrendIcon = trend > 0 ? ArrowUpIcon : ArrowDownIcon;
 
-  @keyframes gradient-x {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-  }
+  // Define color classes for different elements
+  const colorClasses = {
+    emerald: {
+      icon: "text-emerald-400",
+      iconBg: "bg-emerald-500/10",
+      trend: "text-emerald-400",
+      progress: "bg-emerald-500/50",
+      gradient: "from-emerald-500/10"
+    },
+    red: {
+      icon: "text-red-400",
+      iconBg: "bg-red-500/10",
+      trend: "text-red-400",
+      progress: "bg-red-500/50",
+      gradient: "from-red-500/10"
+    },
+    blue: {
+      icon: "text-blue-400",
+      iconBg: "bg-blue-500/10",
+      trend: "text-blue-400",
+      progress: "bg-blue-500/50",
+      gradient: "from-blue-500/10"
+    }
+  };
+  
+  return (
+    <Card className="relative overflow-hidden group border-slate-800 bg-slate-900/50 backdrop-blur-sm">
+      <div className={`absolute inset-0 bg-gradient-to-br ${colorClasses[color].gradient} via-transparent to-transparent transition-opacity opacity-50 group-hover:opacity-100`} />
+      <CardHeader className="space-y-1">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-lg ${colorClasses[color].iconBg}`}>
+              <Icon className={`w-6 h-6 ${colorClasses[color].icon}`} />
+            </div>
+            <CardTitle className="text-lg text-slate-200">{title}</CardTitle>
+          </div>
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <Button variant="ghost" size="icon" className="w-8 h-8 text-slate-400 hover:text-slate-300">
+                <InfoIcon className="w-4 h-4" />
+              </Button>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-80 border-slate-800 bg-slate-900">
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-slate-200">{title} Explained</h4>
+                <p className="text-sm text-slate-400">{description}</p>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <AnimatePresence mode="wait">
+          {isLoading ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="space-y-3"
+            >
+              <div className="h-8 bg-slate-800/50 animate-pulse rounded-md" />
+              <div className="h-4 w-24 bg-slate-800/50 animate-pulse rounded-md" />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="content"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-4"
+            >
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-bold text-slate-200">{value.toLocaleString()}</span>
+                <div className={`flex items-center gap-1 text-sm ${colorClasses[color].trend}`}>
+                  <TrendIcon className="w-4 h-4" />
+                  {trendValue}
+                </div>
+              </div>
+              <div className="w-full bg-slate-800/50 h-2 rounded-full">
+                <div
+                  className={`h-full rounded-full transition-all ${colorClasses[color].progress}`}
+                  style={{ width: `${Math.min(Math.abs(trend), 100)}%` }}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </CardContent>
+    </Card>
+  );
+};
 
-  .animate-bounce-slow {
-    animation: bounce-slow 3s ease-in-out infinite;
-  }
 
-  .animate-gradient-x {
-    animation: gradient-x 15s ease infinite;
-    background-size: 200% auto;
-  }
+const AnalyticsDashboard = () => {
+  const { data: counterData, isLoading: counterLoading } = useQuery({
+    queryKey: ["counter"],
+    queryFn: async () => {
+      const response = await fetch(COUNTER_API);
+      if (!response.ok) throw new Error("Failed to fetch counter data");
+      return response.json();
+    },
+    refetchInterval: 1000,
+  });
 
-  .delay-150 {
-    animation-delay: 150ms;
-  }
-`;
+  const { data: trendsData, isLoading: trendsLoading } = useQuery({
+    queryKey: ["trends"],
+    queryFn: async () => {
+      const response = await fetch(TRENDS_API);
+      if (!response.ok) throw new Error("Failed to fetch trends data");
+      return response.json();
+    },
+    refetchInterval: 500,
+  });
+
+  const yesterdayVisits = trendsData ? trendsData[trendsData.length - 2]?.visits : 0;
+  const todayVisits = counterData?.today_visits || 0;
+  const visitTrend = yesterdayVisits ? ((todayVisits - yesterdayVisits) / yesterdayVisits * 100).toFixed(1) : 0;
+
+  const chartData = trendsData?.map(item => ({
+    day: new Date(item.pageId).toLocaleDateString('en-US', { weekday: 'short' }),
+    visits: item.visits,
+    date: item.pageId
+  })) || [];
+
+  return (
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <StatCard
+          icon={TrendingUpIcon}
+          title="Total Visits"
+          value={counterData?.total_visits || 0}
+          description="Cumulative number of visitors since launch"
+          trend={15.7}
+          defaultColor="blue"
+          isLoading={counterLoading}
+        />
+        <StatCard
+          icon={DatabaseIcon}
+          title="Today's Traffic"
+          value={todayVisits}
+          description="Number of visitors in the last 24 hours"
+          trend={Number(visitTrend)}
+          defaultColor="emerald"
+          isLoading={counterLoading}
+        />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <CardTitle className="flex items-center gap-2">
+                Analytics Overview
+                <Badge variant="secondary" className="ml-2">
+                  <div className="flex items-center gap-1">
+                    <span className="w-1 h-1 rounded-full bg-green-400 animate-pulse" />
+                    Live
+                  </div>
+                </Badge>
+              </CardTitle>
+              <CardDescription>Detailed view of visitor patterns</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="area" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="area" className="flex items-center gap-2">
+                <BarChart2Icon className="w-4 h-4" />
+                Area View
+              </TabsTrigger>
+              <TabsTrigger value="line" className="flex items-center gap-2">
+                <TrendingUpIcon className="w-4 h-4" />
+                Line View
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="area" className="h-[400px] mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="visitGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.1} />
+                  <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" />
+                  <YAxis stroke="hsl(var(--muted-foreground))" />
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-popover border rounded-lg shadow-lg p-3">
+                            <p className="font-medium">{label}</p>
+                            <p className="text-primary font-bold">
+                              {payload[0].value.toLocaleString()} visits
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="visits"
+                    stroke="hsl(var(--primary))"
+                    fillOpacity={1}
+                    fill="url(#visitGradient)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </TabsContent>
+            <TabsContent value="line" className="h-[400px] mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.1} />
+                  <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" />
+                  <YAxis stroke="hsl(var(--muted-foreground))" />
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-popover border rounded-lg shadow-lg p-3">
+                            <p className="font-medium">{label}</p>
+                            <p className="text-primary font-bold">
+                              {payload[0].value.toLocaleString()} visits
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="visits"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={2}
+                    dot={{ strokeWidth: 2, r: 4 }}
+                    activeDot={{ strokeWidth: 4, r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 
 const Counter = () => {
@@ -129,10 +386,8 @@ const Counter = () => {
     queryKey: ["counter"],
     queryFn: async () => {
       const response = await fetch(COUNTER_API);
-      if (!response.ok) {
-        throw new Error("Failed to fetch counter data");
-      }
-      return response.json() as Promise<CounterData>;
+      if (!response.ok) throw new Error("Failed to fetch counter data");
+      return response.json();
     },
     refetchInterval: 1000,
   });
@@ -141,102 +396,90 @@ const Counter = () => {
     queryKey: ["trends"],
     queryFn: async () => {
       const response = await fetch(TRENDS_API);
-      if (!response.ok) {
-        throw new Error("Failed to fetch trends data");
-      }
-      return response.json() as Promise<TrendData[]>;
+      if (!response.ok) throw new Error("Failed to fetch trends data");
+      return response.json();
     },
   });
-
-  if (counterError || trendsError) {
-    toast.error("Failed to load counter data");
-    return null;
-  }
 
   const yesterdayVisits = trendsData ? trendsData[trendsData.length - 2]?.visits : 0;
   const todayVisits = counterData?.today_visits || 0;
   const isIncreasing = todayVisits >= yesterdayVisits;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gradient-to-r from-[#243949] to-[#517fa4] rounded-2xl shadow-2xl animate-fade-in relative overflow-hidden">
-      <div className="absolute inset-0 bg-black/10 backdrop-blur-sm"></div>
-      <div className="p-6 bg-black/20 backdrop-blur-sm rounded-xl transform hover:scale-105 transition-all duration-300 relative group">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
-        <div className="relative">
-          <div className="flex items-center justify-center gap-3 mb-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <Card>
+        <CardHeader className="space-y-1">
+          <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-500/10 rounded-lg">
               <TrendingUpIcon className="w-6 h-6 text-blue-400" />
             </div>
-            <p className="text-gray-200 text-lg font-medium">Total Visits</p>
+            <CardTitle>Total Visits</CardTitle>
           </div>
-          <p className="text-4xl font-bold text-white text-center group-hover:scale-110 transform transition-transform duration-300">
-            {counterLoading ? (
-              <span className="inline-block animate-pulse">...</span>
-            ) : (
-              <span className="relative">
-                {counterData?.total_visits.toLocaleString()}
-                <span className="absolute -top-1 -right-4 text-sm text-blue-400">▲</span>
-              </span>
-            )}
-          </p>
-        </div>
-      </div>
-      <div className="p-6 bg-black/20 backdrop-blur-sm rounded-xl transform hover:scale-105 transition-all duration-300 relative group">
-        <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
-        <div className="relative">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <div className="p-2 bg-green-500/10 rounded-lg">
-              <DatabaseIcon className="w-6 h-6 text-green-400" />
+          <CardDescription>Cumulative visits since launch</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {counterLoading ? (
+            <div className="h-12 bg-slate-700/30 animate-pulse rounded-md" />
+          ) : (
+            <motion.p 
+              className="text-4xl font-bold"
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200 }}
+            >
+              {counterData?.total_visits.toLocaleString()}
+            </motion.p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="space-y-1">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-emerald-500/10 rounded-lg">
+              <DatabaseIcon className="w-6 h-6 text-emerald-400" />
             </div>
-            <p className="text-gray-200 text-lg font-medium">Today's Visits</p>
+            <CardTitle>Today's Visits</CardTitle>
           </div>
-          <div className="text-center">
-            <p className="text-4xl font-bold text-white group-hover:scale-110 transform transition-transform duration-300">
-              {counterLoading || trendsLoading ? (
-                <span className="inline-block animate-pulse">...</span>
-              ) : (
-                <span className="relative">
-                  {counterData?.today_visits.toLocaleString()}
-                  <span 
-                    className={`absolute -top-1 -right-4 text-sm ${
-                      isIncreasing ? 'text-green-400' : 'text-red-400'
-                    }`}
-                  >
-                    {isIncreasing ? '▲' : '▼'}
-                  </span>
+          <CardDescription>Visits in the last 24 hours</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {counterLoading ? (
+            <div className="h-12 bg-slate-700/30 animate-pulse rounded-md" />
+          ) : (
+            <motion.div 
+              className="space-y-2"
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200 }}
+            >
+              <p className="text-4xl font-bold flex items-center gap-2">
+                {todayVisits.toLocaleString()}
+                <span className={`text-sm ${isIncreasing ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {isIncreasing ? '▲' : '▼'}
                 </span>
-              )}
-            </p>
-            {!counterLoading && !trendsLoading && (
-              <p className="text-sm mt-2 text-gray-400">
-                Yesterday's: {yesterdayVisits.toLocaleString()}
               </p>
-            )}
-          </div>
-        </div>
-      </div>
+              <p className="text-sm text-muted-foreground">
+                Yesterday: {yesterdayVisits.toLocaleString()}
+              </p>
+            </motion.div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
-
 
 const VisitTrends = () => {
   const { data, error, isLoading } = useQuery({
     queryKey: ["trends"],
     queryFn: async () => {
       const response = await fetch(TRENDS_API);
-      if (!response.ok) {
-        throw new Error("Failed to fetch trends data");
-      }
-      return response.json() as Promise<TrendData[]>;
+      if (!response.ok) throw new Error("Failed to fetch trends data");
+      return response.json();
     },
     refetchInterval: 500,
   });
-
-  if (error) {
-    toast.error("Failed to load trends data");
-    return null;
-  }
 
   const chartData = data?.map(item => ({
     day: parseInt(item.pageId.split('-')[2]),
@@ -245,74 +488,74 @@ const VisitTrends = () => {
   })) || [];
 
   return (
-    <div className="w-full p-6 bg-gradient-to-br from-[#1A1F2C] to-[#2D3748] rounded-2xl shadow-2xl animate-fade-in relative group">
-      <div className="absolute inset-0 bg-blue-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
-      <div className="relative">
-        <div className="flex items-center justify-between mb-6">
+    <Card className="mt-6">
+      <CardHeader>
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-500/10 rounded-lg">
               <CloudIcon className="w-6 h-6 text-blue-400" />
             </div>
-            <h2 className="text-2xl font-bold text-white">Visit Trends</h2>
+            <CardTitle>Visit Trends</CardTitle>
           </div>
           {!isLoading && (
-            <div className="flex items-center gap-2 text-sm text-gray-400">
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                <span>Live Updates</span>
-              </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-400 rounded-full" />
+                Live Updates
+              </span>
               <RefreshCwIcon className="w-4 h-4 animate-spin" />
             </div>
           )}
         </div>
-        
+        <CardDescription>Daily visitor statistics over time</CardDescription>
+      </CardHeader>
+      <CardContent>
         {isLoading ? (
-          <div className="flex items-center justify-center h-[400px]">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
-          </div>
+          <div className="h-[400px] bg-slate-700/30 animate-pulse rounded-md" />
         ) : (
-          <div className="w-full h-[400px]">
+          <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
-                <XAxis 
-                  dataKey="day" 
-                  stroke="#94a3b8"
+                <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} />
+                <XAxis
+                  dataKey="day"
                   tick={{ fontSize: 12 }}
                   axisLine={false}
                   tickLine={false}
                 />
-                <YAxis 
-                  stroke="#94a3b8"
+                <YAxis
                   tick={{ fontSize: 12 }}
                   axisLine={false}
                   tickLine={false}
                   width={40}
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                    border: '1px solid rgba(59, 130, 246, 0.2)',
-                    borderRadius: '0.5rem',
-                    padding: '8px 12px',
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="border bg-background p-3 rounded-lg shadow-xl">
+                          <p className="font-medium">Day {label}</p>
+                          <p className="text-blue-400 font-bold">
+                            {payload[0].value.toLocaleString()} visits
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
                   }}
-                  labelFormatter={(value) => `Day ${value}`}
-                  formatter={(value: number) => [`${value.toLocaleString()} visits`, '']}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="visits" 
-                  stroke="#60a5fa"
+                <Line
+                  type="monotone"
+                  dataKey="visits"
+                  stroke="hsl(var(--primary))"
                   strokeWidth={3}
                   dot={{
-                    fill: '#60a5fa',
                     strokeWidth: 2,
                     r: 4,
                     strokeDasharray: ''
                   }}
                   activeDot={{
-                    fill: '#60a5fa',
-                    stroke: '#bfdbfe',
+                    stroke: "hsl(var(--primary))",
                     strokeWidth: 4,
                     r: 6
                   }}
@@ -321,8 +564,8 @@ const VisitTrends = () => {
             </ResponsiveContainer>
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -512,8 +755,9 @@ const ArchitectureFlow = () => {
   );
 };
 
-// Update your Index component
-const Index = () => {
+const Index: React.FC = () => {
+  const { toast } = useToast();
+
   useEffect(() => {
     const incrementCounter = async () => {
       try {
@@ -529,24 +773,27 @@ const Index = () => {
         }
       } catch (error) {
         console.error("Error incrementing counter:", error);
-        toast.error("Failed to increment counter");
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to increment counter"
+        });
       }
     };
 
     incrementCounter();
-  }, []);
+  }, [toast]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#1A1F2C] to-gray-900 px-4 py-8">
-      <style>{customStyles}</style>
       <div className="max-w-6xl mx-auto space-y-8">
         <AnimatedTitle />
-        <Counter />
-        <VisitTrends />
+        <AnalyticsDashboard /> {/* Replace Counter and VisitTrends with this */}
         <ArchitectureFlow />
       </div>
     </div>
   );
 };
+
 
 export default Index;
