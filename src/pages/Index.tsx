@@ -118,11 +118,11 @@ const VisitTrends = () => {
             <XAxis 
               dataKey="day" 
               stroke="#fff"
-              label={{ value: 'Day of Month', position: 'bottom', fill: '#fff' }}
+              label={{ value: 'Day', position: 'bottom', fill: '#fff' }}
             />
             <YAxis 
               stroke="#fff"
-              label={{ value: 'Number of Visits', angle: -90, position: 'insideLeft', fill: '#fff' }}
+              label={{ value: 'Visits', angle: -90, position: 'left', fill: '#fff' }}
             />
             <Tooltip 
               contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }}
@@ -146,7 +146,7 @@ const VisitTrends = () => {
 const ArchitectureFlow = () => {
   return (
     <div className="mt-16 space-y-6">
-      <h2 className="text-3xl font-bold text-center text-blue-400 mb-8">System Architecture & Data Flow</h2>
+      <h2 className="text-3xl font-bold text-center text-blue-400 mb-8">Architecture Explained</h2>
       
       {/* Client Layer */}
       <div className="bg-slate-800/50 backdrop-blur-sm p-6 rounded-2xl border border-blue-500/20 hover:border-blue-500/40 transition-all duration-300">
@@ -353,17 +353,17 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#1A1F2C] to-gray-900 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#1A1F2C] to-gray-900 px-4 py-8">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Title Section */}
         <div className="text-center space-y-4 mb-12 animate-fade-in">
-          <div className="flex items-center justify-center gap-3 mb-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
             <RocketIcon className="w-10 h-10 text-blue-400" />
-            <h1 className="text-4xl md:text-5xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
-              AWS Infrastructure Demo
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400 text-center">
+              Owen's AWS Infra
             </h1>
           </div>
-          <p className="text-gray-300 text-lg md:text-xl">
+          <p className="text-gray-300 text-lg md:text-xl max-w-2xl mx-auto">
             Modern Cloud Architecture with Live Data Update
           </p>
         </div>
