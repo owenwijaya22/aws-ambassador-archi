@@ -219,7 +219,7 @@ const ArchitectureFlow = () => {
           <ServerIcon className="w-6 h-6 text-orange-400" />
           <h3 className="text-xl font-semibold text-orange-400">Serverless Backend</h3>
         </div>
-        <div className="grid grid-cols-3 gap-4 max-w-3xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-3xl mx-auto">
           <div className="bg-slate-900/50 p-4 rounded-xl border border-orange-500/10 text-center">
             <ServerIcon className="w-8 h-8 text-orange-400 mx-auto mb-2" />
             <p className="text-orange-400 font-medium">API Gateway</p>
@@ -230,7 +230,7 @@ const ArchitectureFlow = () => {
             <p className="text-orange-400 font-medium">Lambda</p>
             <p className="text-sm text-gray-400">Serverless Computing</p>
           </div>
-          <div className="bg-slate-900/50 p-4 rounded-xl border border-orange-500/10 text-center">
+          <div className="bg-slate-900/50 p-4 rounded-xl border border-orange-500/10 text-center sm:col-span-2 lg:col-span-1">
             <DatabaseIcon className="w-8 h-8 text-orange-400 mx-auto mb-2" />
             <p className="text-orange-400 font-medium">DynamoDB</p>
             <p className="text-sm text-gray-400">NoSQL Database</p>
@@ -248,8 +248,8 @@ const ArchitectureFlow = () => {
           <h3 className="text-xl font-semibold text-red-400">CI/CD Pipeline</h3>
         </div>
         <div className="flex flex-col items-center gap-4">
-          <div className="flex flex-wrap items-center justify-center gap-4 max-w-4xl">            
-            <div className="bg-slate-900/50 p-4 rounded-xl border border-red-500/10 text-center">
+          <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-4 max-w-4xl">            
+            <div className="bg-slate-900/50 p-4 rounded-xl border border-red-500/10 text-center w-full sm:w-auto">
               <div className="w-12 h-12 rounded-full bg-slate-800 mx-auto mb-2 flex items-center justify-center">
                 <RocketIcon className="w-6 h-6 text-red-400" />
               </div>
@@ -257,9 +257,11 @@ const ArchitectureFlow = () => {
               <p className="text-sm text-gray-400">Build Process</p>
             </div>
             
-            <ArrowRightIcon className="w-6 h-6 text-red-400" />
+            <div className="rotate-90 sm:rotate-0">
+              <ArrowRightIcon className="w-6 h-6 text-red-400" />
+            </div>
             
-            <div className="bg-slate-900/50 p-4 rounded-xl border border-red-500/10 text-center">
+            <div className="bg-slate-900/50 p-4 rounded-xl border border-red-500/10 text-center w-full sm:w-auto">
               <div className="w-12 h-12 rounded-full bg-slate-800 mx-auto mb-2 flex items-center justify-center">
                 <Trash2Icon className="w-6 h-6 text-red-400" />
               </div>
@@ -267,9 +269,11 @@ const ArchitectureFlow = () => {
               <p className="text-sm text-gray-400">Remove Old Files</p>
             </div>
             
-            <ArrowRightIcon className="w-6 h-6 text-red-400" />
+            <div className="rotate-90 sm:rotate-0">
+              <ArrowRightIcon className="w-6 h-6 text-red-400" />
+            </div>
             
-            <div className="bg-slate-900/50 p-4 rounded-xl border border-red-500/10 text-center">
+            <div className="bg-slate-900/50 p-4 rounded-xl border border-red-500/10 text-center w-full sm:w-auto">
               <div className="w-12 h-12 rounded-full bg-slate-800 mx-auto mb-2 flex items-center justify-center">
                 <UploadCloudIcon className="w-6 h-6 text-red-400" />
               </div>
@@ -277,9 +281,11 @@ const ArchitectureFlow = () => {
               <p className="text-sm text-gray-400">Upload New Build</p>
             </div>
             
-            <ArrowRightIcon className="w-6 h-6 text-red-400" />
+            <div className="rotate-90 sm:rotate-0">
+              <ArrowRightIcon className="w-6 h-6 text-red-400" />
+            </div>
             
-            <div className="bg-slate-900/50 p-4 rounded-xl border border-red-500/10 text-center">
+            <div className="bg-slate-900/50 p-4 rounded-xl border border-red-500/10 text-center w-full sm:w-auto">
               <div className="w-12 h-12 rounded-full bg-slate-800 mx-auto mb-2 flex items-center justify-center">
                 <RefreshCwIcon className="w-6 h-6 text-red-400" />
               </div>
