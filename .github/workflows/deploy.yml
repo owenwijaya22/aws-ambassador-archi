@@ -19,17 +19,28 @@ jobs:
         with:
           node-version: 'lts/*'  # Use the latest LTS version of Node.js
 
-      - name: Cache Node.js modules
-        id: cache
-        uses: actions/cache@v3
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
+
+      - name: Cache yarn dependencies
+        uses: actions/cache@v2
         with:
-          path: ./node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('./package-lock.json') }}
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Cache npm dependencies
+        uses: actions/cache@v2
+        with:
+          path: '~/.npm'
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
       - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: npm ci --ignore-scripts
-
+        run: npm ci
 
       - name: Build project
         run: npm run build
