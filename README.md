@@ -2,8 +2,8 @@
 - Automated with GitHub Actions CI/CD pipeline that builds the site, deletes existing files in s3, uploads the new builds, and invalidates the CloudFront CDN cache.
 - The backend is a serverless AWS with Lambda and DynamoDB that is exposed with API Gateway to the frontend.
 
-Architecture Explanation:
-<p><img align="left" src="https://github.com/user-attachments/assets/0d25b9c9-7f2c-4a8f-920c-f1b3064e1e57" alt="Demo Preview" /></p>
+Architecture Explanation & Demo:
+<p><img align="left" src="https://github.com/user-attachments/assets/6693b1b1-f3f2-42b5-81c7-69782b6ca9c5" alt="Demo Preview" /></p>
 
 Live Demo: [Click Me!](https://www.simplifiedaws.com/)
 
